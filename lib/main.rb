@@ -155,10 +155,112 @@ puts greeting
 count = Array.new(3) {|i| i + 1} #[1,2,3]
 
 count.each { |item| puts item  }
-=end
+
 
 a = [[7,8,1,4,9],[3,6,7],[1,2,3]]
 
 puts a.sort_by { |x| x[-1]  }
 
 "asfa".to_f
+
+(1..10).each {|x| print x if x==3..x==5}
+
+  def test_parallel_assignments_with_extra_values
+    first_name, last_name = ["John", "Smith", "III"]
+    puts first_name
+    puts last_name
+  
+  end
+  
+   test_parallel_assignments_with_extra_values
+
+def addcommand(commandName,executableProc,largeIconName,smallIconName,toolTip,statusBarText,menuText)
+
+folder="toolbarImages/"
+cmd = UI::command.new(executableproc(commandName)) 
+cmd.small_icon = folder+smallIconName
+cmd.large_icon = folder+largeIconName
+cmd.tooltip = toolTip
+cmd.status_bar_text = statusBarText
+cmd.menu_text = menuText
+
+end
+
+ toolbar = UI::Toolbar.new "Test"
+ # This command displays Hello World on the screen when clicked
+ cmd = UI::Command.new("Test") { UI.messagebox("Hello World") }
+ cmd.small_icon = "ToolPencilSmall.png"
+ cmd.large_icon = "ToolPencilLarge.png"
+ toolbar = toolbar.add_item cmd
+ toolbar.show
+ puts cmd.large_icon
+=end 
+
+
+require 'rexml/document'
+
+class Command1
+  def initialize(name)
+    yield
+    puts name
+  end
+  def messagebox(boxname)
+    puts boxname
+  end
+end
+
+def retrieveproc
+
+	 "Retrieve"
+
+end
+
+def procc(asd)
+  puts asd
+end
+
+#proc1 = Proc.new {|executableProc| puts executableProc}
+def addcommand(commandName,executableProc)
+ 
+	cmd =Command1.new(commandName){procc(executableProc)}
+end
+require 'net/http'
+cmdretrieve = addcommand("Retrieve",retrieveproc)
+require "rexml/document"
+
+include REXML  # so that we don't have to prefix everything with REXML::...
+string = <<EOF
+  <inventory title="OmniCorp Store #45x10^3">
+  <section name="health">
+    <item upc="123456789" stock="12">
+      <name>Invisibility Cream</name>
+      <price>14.50</price>
+      <description>Makes you invisible</description>
+    </item>
+    <item upc="445322344" stock="18">
+      <name>Levitation Salve</name>
+      <price>23.99</price>
+      <description>Levitate yourself for up to 3 hours per application</description>
+    </item>
+  </section>
+  <section name="food">
+    <item upc="485672034" stock="653">
+      <name>Blork and Freen Instameal</name>
+      <price>4.95</price>
+      <description>A tasty meal in a tablet; just add water</description>
+    </item>
+    <item upc="132957764" stock="44">
+      <name>Grob winglets</name>
+      <price>3.56</price>
+      <description>Tender winglets of Grob. Just add water</description>
+    </item>
+  </section>
+</inventory>
+EOF
+doc = Document.new string
+
+doc.elements.each("inventory/section") { |element| puts element.attributes["name"] }
+
+puts "A\\BC\\DEF"[-3..-1]
+http = Net::HTTP.start('localhost', 80) { |http2|  }
+

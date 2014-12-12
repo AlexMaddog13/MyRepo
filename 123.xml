@@ -1,0 +1,11 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+  <SOAP-ENV:Body>
+    <Result>
+      <Item type="CAD" typeId="CCF205347C814DD1AF056875E0A880AC" id="951F86F3AFF348F0894EE089D3FA5C21">
+        <id keyed_name="111" type="CAD">951F86F3AFF348F0894EE089D3FA5C21</id>
+        <native_file keyed_name="Dom.skp" type="File">B3A62F43B8E04434B364E86C4644A5CA</native_file>
+        <itemtype>CCF205347C814DD1AF056875E0A880AC</itemtype>
+      </Item>
+    </Result>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
