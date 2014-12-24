@@ -194,7 +194,7 @@ end
  toolbar = toolbar.add_item cmd
  toolbar.show
  puts cmd.large_icon
-=end 
+
 
 
 require 'rexml/document'
@@ -219,7 +219,7 @@ def procc(asd)
   puts asd
 end
 
-#proc1 = Proc.new {|executableProc| puts executableProc}
+proc1 = Proc.new {|executableProc| puts executableProc}
 def addcommand(commandName,executableProc)
  
 	cmd =Command1.new(commandName){procc(executableProc)}
@@ -262,5 +262,158 @@ doc = Document.new string
 doc.elements.each("inventory/section") { |element| puts element.attributes["name"] }
 
 puts "A\\BC\\DEF"[-3..-1]
-http = Net::HTTP.start('localhost', 80) { |http2|  }
 
+class MyParrent 
+ def initialize
+   puts "я предок"
+ end
+end
+
+class MyChild < MyParrent
+  def initialize
+   super
+   puts "я текущий"
+ end 
+end
+
+MyChild.new
+
+=end
+#! /usr/bin/ruby
+
+require 'gosu'
+class Player
+  attr_reader :score
+  def initialize(window)
+    @image = Gosu::Image.new(window, 'Starfighter.png', false)
+    @beep = Gosu::Sample.new(window, 'beep.wav')
+    @x = @y = @vel_x = @vel_y = @angle = 0.0
+    @score = 0
+  end
+
+  def warp(x, y)
+    @x, @y = x, y
+  end
+
+  def turn_left
+    @angle -= 4.5
+  end
+
+  def turn_right
+    @angle += 4.5
+  end
+
+  def accelerate
+    @vel_x += Gosu::offset_x(@angle, 0.5)
+    @vel_y += Gosu::offset_y(@angle, 0.5)
+  end
+
+  def move
+    @x += @vel_x
+    @y += @vel_y
+    @x %= 4096
+    @y %= 2048
+
+    @vel_x *= 0.95
+    @vel_y *= 0.95
+  end
+
+  def draw
+    @image.draw_rot(@x, @y, 1, @angle)
+  end
+  
+  def fier
+    
+  end
+  
+  def score
+    @score
+  end
+
+   def collect_stars(stars)
+    stars.reject! do |star|
+      if Gosu::distance(@x, @y, star.x, star.y) < 130 then
+        @score += 10
+        @beep.play
+        true
+      else
+        false
+      end
+    end
+  end
+end
+
+class GameWindow < Gosu::Window
+  def initialize
+    super(4096, 2048, false)
+    self.caption = "Star Fighter"
+    @background_image = Gosu::Image.new(self,'Space.jpg', true)
+
+    @player = Player.new(self)
+    @player.warp(320, 240)
+    
+    @star_anim = Gosu::Image::load_tiles(self, 'exp.png', 128, 128, false)
+    @stars = Array.new
+    
+    @font = Gosu::Font.new(self, Gosu::default_font_name, 200)
+  end
+
+  def update
+    
+    if button_down? Gosu::KbLeft or button_down? Gosu::GpLeft then
+      @player.turn_left
+    end
+    if button_down? Gosu::KbRight or button_down? Gosu::GpRight then
+      @player.turn_right
+    end
+    if button_down? Gosu::KbUp or button_down? Gosu::GpButton0 then
+      @player.accelerate
+    end
+    @player.move
+     @player.collect_stars(@stars)
+
+    if rand(100) < 4 and @stars.size < 25 then
+      @stars.push(Star.new(@star_anim))
+    end
+  end
+
+  def draw
+    @player.draw
+    @background_image.draw(0, 0, 0);
+    @stars.each { |star| star.draw }
+    @font.draw("Счет: #{@player.score}", 100, 100, ZOrder::UI, 1.0, 1.0, 0xffffff00)
+  end
+
+  def button_down(id)
+    if id == Gosu::KbEscape
+      close
+    end
+  end
+end
+
+module ZOrder
+  Background, Stars, Player, UI = *0..3
+end
+
+class Star
+  attr_reader :x, :y
+
+  def initialize(animation)
+    @animation = animation
+    #@color = Gosu::Color.new(0xff000000)
+    #@color.red = rand(256 - 40) + 40
+    #@color.green = rand(256 - 40) + 40
+    #@color.blue = rand(256 - 40) + 40
+    @x = rand * 4096
+    @y = rand * 2048
+  end
+
+  def draw  
+    img = @animation[Gosu::milliseconds / 100 % @animation.size];
+    img.draw(@x - img.width / 1.0, @y - img.height / 1.0,
+        ZOrder::Stars, 1, 1,  0xffffffff, :add)
+  end
+end
+
+window = GameWindow.new
+window.show
