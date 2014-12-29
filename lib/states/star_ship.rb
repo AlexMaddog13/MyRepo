@@ -3,6 +3,46 @@
 # and open the template in the editor.
 require 'gosu'
 
+class DrawObject
+  
+  def initialize(window, image, scaleble = false, order = 0)
+    @window = window
+    @scaleble = scaleble
+    @image = Gosu::Image.new(window, image,false)
+    @x = @y = 0;
+    @scaleXY = 1
+    @order = 0;
+  end
+  
+  
+  def move
+    @x = @window.mouse_x
+    @y = @window.mouse_y
+    self.draw
+  end
+
+  def moveto(x,y)
+    puts "x #{@x}, y #{@y}"
+    @x = x/@scaleXY
+    @y = y/@scaleXY
+    puts @scaleXY
+    puts "x #{@x}, y #{@y}"
+    self.draw
+  end
+  
+  def draw
+    if @scaleble
+      @x = @x*@window.scale;
+      @y = @y*@window.scale
+      @scale = @window.scale
+    end
+    @image.draw(@x,@y,@order,@scaleXY,@scaleXY) 
+  end
+  
+end
+class Cursor  < DrawObject
+
+end
 class Laser
     def initialize(player, window, pos_offset_x, pos_offset_y)
         @player = player
@@ -42,7 +82,7 @@ class Laser
    
     def draw
       if @shooting
-            @icon.draw(@x ,@y, 1)
+            @icon.draw(@x ,@y, 0)
       end
 
     end
@@ -50,21 +90,12 @@ class Laser
 end
 
 
-class StarShip
+class StarShip < DrawObject
   attr_reader :score
-  attr_reader :x
-  attr_reader :y
-  attr_reader :angle
-  attr_reader :x_local
-  attr_reader :y_local
-  attr_reader :vel_x
-  attr_reader :vel_y
   def initialize(window)
-    @window = window
-    @image = Gosu::Image.new(@window, 'Starfighter.png', false)
+    super(window,'Starfighter.png',true)
     @beep = Gosu::Sample.new(@window, 'beep.wav')
-    @x = @y = @vel_x = @vel_y = @angle = 0.0
-    @x_local = @y_local =0
+    @vel_x = @vel_y = @angle = 0.0
     @score = 0
     @startshooting = Gosu::milliseconds;
     @delay = 100;
@@ -72,18 +103,18 @@ class StarShip
   end
 
   def warp(x, y)
-    @x, @y = x, y
+    self.moveto(x,y)
   end
 
   def turn_left
-    if angle.abs == 360 then
+    if @angle.abs == 360 then
       @angle = 0
     end
     @angle -= 4.5
   end
 
   def turn_right
-    if angle.abs == 360 then
+    if @angle.abs == 360 then
       @angle = 0
     end
     @angle += 4.5
@@ -104,12 +135,14 @@ class StarShip
     @vel_y *= 0.95
     
     #puts "player x: #{@x} y:#{@y}"
-    @x_local, @y_local = (@x * @window.map.f_x)%@window.width , (@y*@window.map.f_y)%@window.height 
+    #@x_local, @y_local = (@x * @window.map.scale)%@window.width , (@y*@window.map.scale)%@window.height 
   end
 
   def draw
-    @image.draw_rot((@x+@window.map.x)*@window.map.f_x, (@y+ @window.map.y)*@window.map.f_y  , 1, @angle,0.5,0.5,@window.map.f_x,@window.map.f_y)
-    @Beams.each{|laser| laser.draw}
+    @scale = @window.map.scale
+    @image.draw_rot((@x*@window.map.scale), (@y*@window.map.scale)  , 1, @angle,0.5,0.5,@window.map.scale,@window.map.scale)
+    #puts (@x*@window.map.scale)
+    #@Beams.each{|laser| laser.draw}
   end
  
   
@@ -127,6 +160,10 @@ class StarShip
     if @window.button_down? Gosu::KbUp or @window.button_down? Gosu::GpButton0 then
       self.accelerate
     end
+    if @window.button_down?(Gosu::MsLeft)
+      self.moveto(@window.mouse_x,@window.mouse_y)
+    end
+    
     if @window.button_down? Gosu::KbSpace
       if  @Beams.size < 2 
         @laser1 = Laser.new(self,@window,30,30)

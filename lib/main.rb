@@ -1,31 +1,16 @@
 require 'gosu'
 require_relative 'states/star_ship' 
 
-class WorldMap
-  attr_reader :f_x, :f_y, :x,:y
+class WorldMap < DrawObject
+  attr_reader :scale, :x,:y
   def initialize(w,h, window)
-   @width = w;
-   @height = h;
+    super(window,'Space.jpg')
    @window = window
-   @background_image =  Gosu::Image.new(@window,'Space.jpg',false)
+  #@background_image =  Gosu::Image.new(@window,'Space.jpg',false)
    @f_x = @f_y = 1.0
-   @x = 0
-   @y = 0
-   @prev_y,  @prev_y = 0
-   @f_x_prev, @f_y_prev =0 
+   @scale =  1.0
   end
-  def borders
-    
-    if @window.RES_Y * @f_y < @height 
-      @f_y = @f_y_prev;  
-    end
-    if @x > 0 || ((@x.abs + @width/@f_x )) > @window.RES_X
-      @x = @prev_x
-    end 
-    if @y > 0 || ((@y.abs + @height/@f_y ) ) > @window.RES_Y
-      @y = @prev_y
-    end 
-  end
+
   
   def update(player)
     @player = player
@@ -34,21 +19,18 @@ class WorldMap
     if @window.button_down? Gosu::KbNumpadAdd  then
       #puts (@window.RES_X * @f_x )
       #puts @width
-     if @window.RES_X * @f_x  < @width*4 &&  @window.RES_Y * @f_y  < @height*3 
-        @f_x += 0.01
-        @f_y += 0.01
+     #if @window.RES_X * @scale  < @width*4 &&  @window.RES_Y * @scale < @height*3 
+       @scale += 0.01
         #@x -=15 
         #@y -=15 
-      end
+      #end
       
     end
     
     if @window.button_down? Gosu::KbNumpadSubtract  then
-      if @window.RES_X * @f_x > @width &&  @window.RES_Y * @f_y > @height
-        @f_x -= 0.01
-        @f_y -= 0.01
-      end
-      
+      #if @window.RES_X * @scale > @width &&  @window.RES_Y * @scale > @height
+        @scale -= 0.01
+      #end
     end
 
     if @window.button_down?(Gosu::MsLeft) 
@@ -74,16 +56,16 @@ class WorldMap
     end
     
   end
-  def draw
+  #def draw
     #puts "diff x #{@x - @height}, diff y #{@y -  @width}"
     #puts "height x #{@height}, width y #{@width}"
     #self.borders
 
     #puts "px #{@player.x*@f_x}, py #{@player.y*@f_y}"
-    #puts "mx #{@x*@f_x}, my #{@y*@f_y}"
+    #puts "mx #{@scale}"
     #puts "cx #{(@x+@player.x)*@f_x}, my #{(@x+@player.x)*@f_x}"
-    @background_image.draw(@x*@f_x,@x*@f_x, 0,@f_x,@f_y);
-  end
+  #  @background_image.draw(@x*@scale,@x*@scale, 0,@scale,@scale);
+  #end
   
 end
 class GameWindow < Gosu::Window
@@ -95,8 +77,8 @@ class GameWindow < Gosu::Window
     super(5545/8, 2877/6, false)
     self.caption = "Star Fighter"
     @map = WorldMap.new(5545/8,2877/6, self)
-    
-
+    @cursor = Cursor.new(self,"cursor.png",99)
+    @scaleXY = 0;
     @player = StarShip.new(self)
     @player.warp(0, 0)
     @star_anim = Gosu::Image::load_tiles(self, 'exp.png', 128, 128, false)
@@ -107,6 +89,7 @@ class GameWindow < Gosu::Window
   
   def update
     @player.update
+    #@cursor.update
     @map.update(@player)
     if rand(100) < 4 and @stars.size < 25 then
       @stars.push(Star.new(@star_anim, self))
@@ -116,6 +99,7 @@ class GameWindow < Gosu::Window
   def draw
     @player.draw
     @map.draw
+    @cursor.move
     @stars.each { |star| star.draw }
     #@font.draw("Счет: #{@player.score}", 50, 50, ZOrder::UI, 1.0, 1.0, 0xffffff00)
   end
@@ -147,10 +131,11 @@ class Star
 
   def draw  
     img = @animation[Gosu::milliseconds / 100 % @animation.size];
-    img.draw((@x+@window.map.x - img.width / 1.0)*@window.map.f_x, (@y+@window.map.y - img.height / 1.0)*@window.map.f_y,
-        ZOrder::Stars, @window.map.f_x, @window.map.f_y,  0xffffffff, :add)
+    img.draw((@x+@window.map.x - img.width / 1.0)*@window.map.scale, (@y+@window.map.y - img.height / 1.0)*@window.map.scale,
+        ZOrder::Stars, @window.map.scale, @window.map.scale,  0xffffffff, :add)
   end
 end
 
+puts  "Строка/".chop if "Строка/".end_with?("/")
 window = GameWindow.new
 window.show
