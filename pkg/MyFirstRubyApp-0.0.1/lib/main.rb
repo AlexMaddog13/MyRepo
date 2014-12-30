@@ -2,46 +2,26 @@ require 'gosu'
 require_relative 'states/star_ship' 
 
 class WorldMap < DrawObject
-  attr_reader :scale, :x,:y
-  def initialize(w,h, window)
-    super(window,'Space.jpg')
-   @window = window
-  #@background_image =  Gosu::Image.new(@window,'Space.jpg',false)
-   @f_x = @f_y = 1.0
-   @scale =  1.0
-  end
+  attr_reader :x,:y
+  def initialize(window, multiplier)
+    @image = []
+   (multiplier ** 2).times {@image << Gosu::Image.new(window, 'Space.jpg',false)}
+   super(window,'Space.jpg')
+   @multiplier = multiplier
+ end
 
   
-  def update(player)
-    @player = player
-    #@x = @player.x_local
-    #@y = @player.y_local
-    if @window.button_down? Gosu::KbNumpadAdd  then
-      #puts (@window.RES_X * @f_x )
-      #puts @width
-     #if @window.RES_X * @scale  < @width*4 &&  @window.RES_Y * @scale < @height*3 
-       @scale += 0.01
-        #@x -=15 
-        #@y -=15 
-      #end
-      
-    end
-    
-    if @window.button_down? Gosu::KbNumpadSubtract  then
-      #if @window.RES_X * @scale > @width &&  @window.RES_Y * @scale > @height
-        @scale -= 0.01
-      #end
-    end
-
-    if @window.button_down?(Gosu::MsLeft) 
-      if !@drag 
-        @drag = [@window.mouse_x, @window.mouse_y]
+  def update()
+ 
+    #if @window.button_down?(Gosu::MsLeft) 
+     # if !@drag 
+      #  @drag = [@window.mouse_x, @window.mouse_y]
         #puts "mouse x #{@window.mouse_x}, mouse y #{@window.mouse_y}"
-        @origin = [@x, @y]
-      else
-        @prev_x,  @prev_y = @x , @y
-        @x  = @origin[0] - (@window.mouse_x - @drag[0]) #translate according to mouse movement
-        @y  = @origin[1] - (@window.mouse_y - @drag[1])
+       # @origin = [@x, @y]
+      #else
+       # @prev_x,  @prev_y = @x , @y
+       # @x  = @origin[0] - (@window.mouse_x - @drag[0]) 
+       # @y  = @origin[1] - (@window.mouse_y - @drag[1])
        
         #puts "x #{@x.abs > @height*2}, y #{@y.abs > @width*2}"
         #puts "x #{@x}, y #{@y}"
@@ -50,57 +30,70 @@ class WorldMap < DrawObject
         #@y = @height*-2 if @y.abs > @height*2
         #@x = @width*-2 if @x.abs > @width*2
          #puts "mouse x #{@window.x}, mouse y #{@window.y}"
-      end
-    else #button is released
-      @drag = @origin = nil #clear variables, so you can re-use them
-    end
-    
+   #   end
+    #else 
+     # @drag = @origin = nil 
+    #end
   end
-  #def draw
-    #puts "diff x #{@x - @height}, diff y #{@y -  @width}"
-    #puts "height x #{@height}, width y #{@width}"
-    #self.borders
+  def draw
+    curx, cury = @x,@y
+    @image.each_with_index do |item, i|
+    @window.scale(@window.scaleVal){item.draw(curx,cury,@order)}
+    curx += (@window.width)/(@multiplier)
+    if curx == (@window.width) 
 
-    #puts "px #{@player.x*@f_x}, py #{@player.y*@f_y}"
-    #puts "mx #{@scale}"
-    #puts "cx #{(@x+@player.x)*@f_x}, my #{(@x+@player.x)*@f_x}"
-  #  @background_image.draw(@x*@scale,@x*@scale, 0,@scale,@scale);
-  #end
+      curx = 0;
+      cury += (@window.height)/(@multiplier)
+    end
+    end
+  end
   
 end
 class GameWindow < Gosu::Window
-  attr_accessor :stars, :RES_X, :RES_Y, :map
-
+  attr_accessor :stars, :RES_X, :RES_Y, :scaleVal, :zoom_center_x,:zoom_center_y
   def initialize
-    @RES_X = 5545
-    @RES_Y = 2877
-    super(5545/8, 2877/6, false)
+    mult = 1
+    
+    @RES_X = 900*mult
+    @RES_Y = 675*mult
+    super(@RES_X, @RES_Y, false)
     self.caption = "Star Fighter"
-    @map = WorldMap.new(5545/8,2877/6, self)
-    @cursor = Cursor.new(self,"cursor.png",99)
-    @scaleXY = 0;
-    @player = StarShip.new(self)
+    @map = WorldMap.new(self,mult)
+    @player = StarShip.new(self,@map)
+    @cursor = Cursor.new(self,"cursor.png",false,@player)
+    @scaleVal =  5;
     @player.warp(0, 0)
     @star_anim = Gosu::Image::load_tiles(self, 'exp.png', 128, 128, false)
     @stars = Array.new
-    
     @font = Gosu::Font.new(self, Gosu::default_font_name, 200)
+    
+    @zoom_center_x,@zoom_center_y = 0,0
   end
   
   def update
+    if self.button_down? Gosu::KbNumpadAdd  then
+
+      @scaleVal += 0.01 
+      @zoom_center_x, @zoom_center_y =  @player.x,@player.y
+    end
+    
+    if self.button_down? Gosu::KbNumpadSubtract  then
+      @scaleVal -= 0.01
+      @zoom_center_x, @zoom_center_y =  @player.x, @player.y
+    end
     @player.update
-    #@cursor.update
-    @map.update(@player)
+    @map.update
     if rand(100) < 4 and @stars.size < 25 then
       @stars.push(Star.new(@star_anim, self))
     end
   end
 
   def draw
+
     @player.draw
     @map.draw
     @cursor.move
-    @stars.each { |star| star.draw }
+    #@stars.each { |star| star.draw }
     #@font.draw("Счет: #{@player.score}", 50, 50, ZOrder::UI, 1.0, 1.0, 0xffffff00)
   end
 
@@ -115,7 +108,7 @@ module ZOrder
   Background, Stars, Player, UI = *0..3
 end
 
-class Star
+class Star < DrawObject
   attr_reader :x, :y
 
   def initialize(animation, window)
@@ -131,11 +124,10 @@ class Star
 
   def draw  
     img = @animation[Gosu::milliseconds / 100 % @animation.size];
-    img.draw((@x+@window.map.x - img.width / 1.0)*@window.map.scale, (@y+@window.map.y - img.height / 1.0)*@window.map.scale,
-        ZOrder::Stars, @window.map.scale, @window.map.scale,  0xffffffff, :add)
+    img.draw((@x+@window.map.x - img.width / 1.0)*@window.scaleXY, (@y+@window.map.y - img.height / 1.0)*@window.scaleXY,
+        ZOrder::Stars, @window.scaleXY, @window.scaleXY,  0xffffffff, :add)
   end
 end
 
-puts  "Строка/".chop if "Строка/".end_with?("/")
 window = GameWindow.new
 window.show

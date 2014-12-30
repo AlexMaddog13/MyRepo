@@ -4,14 +4,14 @@
 require 'gosu'
 
 class DrawObject
-  
-  def initialize(window, image, scaleble = false, order = 0)
+  attr_reader :order
+  def initialize(window, image, scaleble = false, parent = nil)
     @window = window
     @scaleble = scaleble
-    @image = Gosu::Image.new(window, image,false)
+    @image ||= Gosu::Image.new(window, image,false)
     @x = @y = 0;
-    @scaleXY = 1
-    @order = 0;
+    @parent = parent;
+    @order = parent.nil? ? 0:parent.order + 1;
   end
   
   
@@ -22,21 +22,18 @@ class DrawObject
   end
 
   def moveto(x,y)
-    puts "x #{@x}, y #{@y}"
-    @x = x/@scaleXY
-    @y = y/@scaleXY
-    puts @scaleXY
-    puts "x #{@x}, y #{@y}"
+    @x = x/@window.scaleVal
+    @y = y/@window.scaleVal
     self.draw
   end
   
   def draw
-    if @scaleble
-      @x = @x*@window.scale;
-      @y = @y*@window.scale
-      @scale = @window.scale
-    end
-    @image.draw(@x,@y,@order,@scaleXY,@scaleXY) 
+   if @scaleble
+      @window.scale(@window.scaleVal){
+      @image.draw(@x,@y,@order)}
+   else
+      @image.draw(@x,@y,@order)
+   end
   end
   
 end
@@ -91,9 +88,9 @@ end
 
 
 class StarShip < DrawObject
-  attr_reader :score
-  def initialize(window)
-    super(window,'Starfighter.png',true)
+  attr_reader :score, :x, :y
+  def initialize(window,map)
+    super(window,'Starfighter.png',true,map)
     @beep = Gosu::Sample.new(@window, 'beep.wav')
     @vel_x = @vel_y = @angle = 0.0
     @score = 0
@@ -128,8 +125,8 @@ class StarShip < DrawObject
   def move
     @x += @vel_x
     @y += @vel_y
-    @x %= @window.RES_X
-    @y %= @window.RES_Y
+    @x %= @window.width
+    @y %= @window.height
 
     @vel_x *= 0.95
     @vel_y *= 0.95
@@ -139,15 +136,14 @@ class StarShip < DrawObject
   end
 
   def draw
-    @scale = @window.map.scale
-    @image.draw_rot((@x*@window.map.scale), (@y*@window.map.scale)  , 1, @angle,0.5,0.5,@window.map.scale,@window.map.scale)
+    @window.scale(@window.scaleVal){ @image.draw_rot(@x, @y, @order, @angle,0.5,0.5)}
     #puts (@x*@window.map.scale)
     #@Beams.each{|laser| laser.draw}
   end
  
   
   def score
-    @score
+    @scores
   end
   
  def update
@@ -176,6 +172,7 @@ class StarShip < DrawObject
     end
    
     self.move
+
     self.collect_stars(@window.stars)
     @Beams.each{|laser| @Beams.delete(laser) if !laser.shootable? }
     @Beams.each{|laser| laser.update}
