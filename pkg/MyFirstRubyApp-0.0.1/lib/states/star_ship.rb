@@ -2,43 +2,62 @@
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
 require 'gosu'
-
 class DrawObject
-  attr_reader :order
-  def initialize(window, image, scaleble = false, parent = nil)
+  attr_reader :order, :x, :y
+  def initialize(window, image, scaleble = false, parent = nil, imgbasescale=1)
     @window = window
     @scaleble = scaleble
     @image ||= Gosu::Image.new(window, image,false)
     @x = @y = 0;
     @parent = parent;
     @order = parent.nil? ? 0:parent.order + 1;
+    @imgbasescale= imgbasescale
+    @angle = 0.0;
+    @newangle = nil;
+    @angle_step = 1.5;
+    @znak = -1;
+
   end
   
   
   def move
+    
     @x = @window.mouse_x
     @y = @window.mouse_y
+   
     self.draw
   end
 
   def moveto(x,y)
-    @x = x/@window.scaleVal
-    @y = y/@window.scaleVal
-    self.draw
+    @newangle = (-180*Math.atan2(@x-x,@y-y)/Math::PI)
+    diffangle = @newangle - @angle
+    
+    @znak = ((diffangle/diffangle.abs).nan? ? 1 : (diffangle/diffangle.abs))
+    @dir_x, @dir_y = x,y
+      #if (Gosu::milliseconds - starms) >= @angle_wait 
+      #  @angle += znak* @angle_step 
+       # starms = Gosu::milliseconds
+        #self.draw
+      #end
+    #end
+ 
+    #@x = x/@window.scaleVal
+    #@y = y/@window.scaleVal
+
   end
   
   def draw
    if @scaleble
       @window.scale(@window.scaleVal){
-      @image.draw(@x,@y,@order)}
+      @image.draw(@x,@y,@order,@imgbasescale,@imgbasescale)}
    else
-      @image.draw(@x,@y,@order)
+      @image.draw(@x,@y,@order,@imgbasescale,@imgbasescale)
    end
   end
   
 end
 class Cursor  < DrawObject
-
+ 
 end
 class Laser
     def initialize(player, window, pos_offset_x, pos_offset_y)
@@ -49,6 +68,7 @@ class Laser
         @y = @player.y + Gosu::offset_y(@player.angle + pos_offset_y, 100) 
         @distance = 0
         @icon = Gosu::Image.new(@window, "123.png", false,50,50,50,50)
+
     end
    
     def shoot
@@ -92,7 +112,7 @@ class StarShip < DrawObject
   def initialize(window,map)
     super(window,'Starfighter.png',true,map)
     @beep = Gosu::Sample.new(@window, 'beep.wav')
-    @vel_x = @vel_y = @angle = 0.0
+    @vel_x = @vel_y =  0.0
     @score = 0
     @startshooting = Gosu::milliseconds;
     @delay = 100;
@@ -136,6 +156,16 @@ class StarShip < DrawObject
   end
 
   def draw
+    if !@newangle.nil? 
+    if @angle*@znak <= @newangle*@znak
+      puts @angle*@znak
+      puts @newangle*@znak
+      @angle +=  @angle_step*@znak
+    else
+      @newangle = nil
+    end
+    end
+ 
     @window.scale(@window.scaleVal){ @image.draw_rot(@x, @y, @order, @angle,0.5,0.5)}
     #puts (@x*@window.map.scale)
     #@Beams.each{|laser| laser.draw}
@@ -145,7 +175,7 @@ class StarShip < DrawObject
   def score
     @scores
   end
-  
+ 
  def update
     if @window.button_down? Gosu::KbLeft or @window.button_down? Gosu::GpLeft then
       self.turn_left
@@ -156,7 +186,7 @@ class StarShip < DrawObject
     if @window.button_down? Gosu::KbUp or @window.button_down? Gosu::GpButton0 then
       self.accelerate
     end
-    if @window.button_down?(Gosu::MsLeft)
+    if @window.curButtonId == (Gosu::MsLeft)
       self.moveto(@window.mouse_x,@window.mouse_y)
     end
     
