@@ -28,22 +28,26 @@ class DrawObject
     self.draw
   end
 
+  def warp(x,y)
+    @x = x
+    @y = y
+   
+    self.draw
+  end
+  
   def moveto(x,y)
     @newangle = (-180*Math.atan2(@x-x,@y-y)/Math::PI)
-    diffangle = @newangle - @angle
+    diffangle =  @angle.abs - @newangle.abs 
     
-    @znak = ((diffangle/diffangle.abs).nan? ? 1 : (diffangle/diffangle.abs))
+    @znak = ((diffangle/diffangle.abs).nan? ? 1 : (diffangle/diffangle.abs)) 
     @dir_x, @dir_y = x,y
-      #if (Gosu::milliseconds - starms) >= @angle_wait 
-      #  @angle += znak* @angle_step 
-       # starms = Gosu::milliseconds
-        #self.draw
-      #end
-    #end
- 
-    #@x = x/@window.scaleVal
-    #@y = y/@window.scaleVal
 
+
+      puts @angle
+      puts @newangle
+      puts @znak
+      puts diffangle
+    
   end
   
   def draw
@@ -119,22 +123,18 @@ class StarShip < DrawObject
     @Beams = Array.new
   end
 
-  def warp(x, y)
-    self.moveto(x,y)
-  end
-
   def turn_left
-    if @angle.abs == 360 then
-      @angle = 0
+    if @angle.abs == 180 then
+      @angle = 180
     end
-    @angle -= 4.5
+    @angle -= @angle_step
   end
 
   def turn_right
-    if @angle.abs == 360 then
-      @angle = 0
+    if @angle.abs == 180 then
+      @angle = -180
     end
-    @angle += 4.5
+    @angle += @angle_step
   end
 
   def accelerate
@@ -157,10 +157,12 @@ class StarShip < DrawObject
 
   def draw
     if !@newangle.nil? 
-    if @angle*@znak <= @newangle*@znak
-      puts @angle*@znak
-      puts @newangle*@znak
-      @angle +=  @angle_step*@znak
+    if @angle*@znak >= @newangle*@znak
+        if @znak > 0
+        self.turn_left
+        else
+          self.turn_right
+        end
     else
       @newangle = nil
     end

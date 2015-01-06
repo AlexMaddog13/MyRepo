@@ -61,7 +61,7 @@ class GameWindow < Gosu::Window
     @player = StarShip.new(self,@map)
     @cursor = Cursor.new(self,"cursor.png",false,@player,5)
     @scaleVal =  1;
-    @player.warp(0, 0)
+    @player.warp(500, 500)
     @star_anim = Gosu::Image::load_tiles(self, 'exp.png', 128, 128, false)
     @stars = Array.new
     @font = Gosu::Font.new(self, Gosu::default_font_name, 200)
