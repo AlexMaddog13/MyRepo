@@ -37,16 +37,10 @@ class DrawObject
   
   def moveto(x,y)
     @newangle = (-180*Math.atan2(@x-x,@y-y)/Math::PI)
-    diffangle =  @angle.abs - @newangle.abs 
-    
+    diffangle =  @angle - @newangle 
     @znak = ((diffangle/diffangle.abs).nan? ? 1 : (diffangle/diffangle.abs)) 
     @dir_x, @dir_y = x,y
-
-
-      puts @angle
-      puts @newangle
-      puts @znak
-      puts diffangle
+    @znak = @znak*-1 if diffangle.abs > 360 - diffangle.abs 
     
   end
   
@@ -151,13 +145,11 @@ class StarShip < DrawObject
     @vel_x *= 0.95
     @vel_y *= 0.95
     
-    #puts "player x: #{@x} y:#{@y}"
-    #@x_local, @y_local = (@x * @window.map.scale)%@window.width , (@y*@window.map.scale)%@window.height 
   end
 
   def draw
     if !@newangle.nil? 
-    if @angle*@znak >= @newangle*@znak
+       if ((@angle - @newangle).abs).floor != 0 
         if @znak > 0
         self.turn_left
         else
